@@ -1,27 +1,31 @@
 "use client"
 
+import type React from "react"
 import { useRef, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { ArrowLeftCircle, ArrowRightCircle , Plus } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function GalleryWidget() {
   const [images, setImages] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(0)
+  const [direction, setDirection] = useState(0)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const IMAGES_PER_PAGE = 3
-  const totalPages = Math.ceil(images.length / IMAGES_PER_PAGE)
+  const totalPages = Math.max(1, Math.ceil(images.length / IMAGES_PER_PAGE))
 
   const handlePrevious = () => {
+    setDirection(-1)
     setCurrentPage((prev) => (prev === 0 ? totalPages - 1 : prev - 1))
   }
 
   const handleNext = () => {
+    setDirection(1)
     setCurrentPage((prev) => (prev === totalPages - 1 ? 0 : prev + 1))
   }
 
-  // 🔹 Handle Image Upload
   const handleButtonClick = () => {
     fileInputRef.current?.click()
   }
@@ -38,74 +42,100 @@ export default function GalleryWidget() {
     }
   }
 
-  // 🔹 Images for the current page
   const startIndex = currentPage * IMAGES_PER_PAGE
   const currentImages = images.slice(startIndex, startIndex + IMAGES_PER_PAGE)
 
-  return (
-    <Card className="bg-card border border-border rounded-lg overflow-hidden shadow-lg">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-        <h3 className="text-sm font-semibold text-foreground">Gallery</h3>
+  // Animation variants for sliding
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: { duration: 0.5, ease: "easeOut" },
+    },
+    exit: (direction: number) => ({
+      x: direction > 0 ? -300 : 300,
+      opacity: 0,
+      transition: { duration: 0.4, ease: "easeIn" },
+    }),
+  }
 
-        <input
-          type="file"
-          accept="image/*"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <Button
-          onClick={handleButtonClick}
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-2 text-xs bg-transparent"
-        >
-          <Plus className="w-4 h-4" />
-          ADD IMAGE
-        </Button>
+  return (
+    <Card className="bg-[#363C43] border border-[#3A3F4A] rounded-3xl p-6 shadow-2xl max-w-5xl w-full overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <button className="bg-[#000000] text-white px-7 py-3 rounded-2xl font-medium text-xl shadow-md">
+          Gallery
+        </button>
+
+        <div className="flex items-center gap-6">
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileChange}
+          />
+
+          <Button
+            onClick={handleButtonClick}
+          className=" w-34 flex items-center gap-2 bg-[#3A3F4A] hover:bg-[#3A3F4A] text-white text-xs px-4 py-2 rounded-full shadow-[-1px_-2px_4px_0px_rgba(255,255,255,0.3)]"          >
+            <Plus className="w-4 h-4 " />
+            ADD IMAGE
+          </Button>
+
+          <div className="flex items-center gap-5">
+            <button
+              onClick={handlePrevious}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#454B57] shadow-md transition border border-[#4A5060]"
+            >
+              <ArrowLeftCircle className="w-12 h-12 text-black" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#454B57] shadow-md transition border border-[#4A5060]"
+            >
+              <ArrowRightCircle className="w-12 h-12 text-black" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Gallery Content */}
-      <div className="p-4">
-        {/* Image Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-          {currentImages.map((img, index) => (
-            <div
-              key={index}
-              className="relative bg-muted rounded-lg overflow-hidden h-48"
-            >
-              <img
-                src={img}
-                alt={`Gallery image ${startIndex + index + 1}`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={handlePrevious}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-            aria-label="Previous set"
+      {/* Image Grid with Slide Animation */}
+      <div className="relative h-44 overflow-hidden">
+        <AnimatePresence custom={direction} mode="wait">
+          <motion.div
+            key={currentPage}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="grid grid-cols-3 gap-4 absolute w-full"
           >
-            <ChevronLeft className="w-5 h-5 text-foreground" />
-          </button>
-
-          <div className="text-xs font-semibold text-blue-500 bg-blue-500/10 px-3 py-1 rounded">
-            Page {currentPage + 1} / {totalPages}
-          </div>
-
-          <button
-            onClick={handleNext}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
-            aria-label="Next set"
-          >
-            <ChevronRight className="w-5 h-5 text-foreground" />
-          </button>
-        </div>
+            {currentImages.length > 0 ? (
+              currentImages.map((img, index) => (
+                <div
+                  key={index}
+                  className="overflow-hidden rounded-2xl bg-[#1A1E26] h-40 shadow-md border border-[#3A3F4A] transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-[0_0_20px_#38bdf8]/60"
+                >
+                  <img
+                    src={img || "/placeholder.svg"}
+                    alt={`Gallery image ${startIndex + index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="col-span-3 text-center text-gray-500 text-sm py-10">
+                No images added yet.
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </Card>
   )

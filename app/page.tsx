@@ -1,15 +1,19 @@
+"use client"
+
 import ProfileWidget from "@/components/profile-widget"
 import GalleryWidget from "@/components/gallery-widget"
 
-export default function Home() {
-  return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
-        {/* Left half - empty (responsive) */}
-        <div className="hidden lg:block lg:w-1/2" />
 
-        {/* Right half - widgets */}
-        <div className="w-full lg:w-1/2 flex flex-col gap-6">
+export default function AssignmentPage() {
+  return (
+    <div className="min-h-screen bg-[#1B1E24] text-white flex items-center justify-center px-8 py-12">
+      {/* Full layout divided into left and right */}
+      <div className="flex w-full max-w-7xl">
+        {/* Left side (empty but responsive) */}
+        <div className="flex-1 hidden md:block"></div>
+
+        {/* Right side widgets */}
+        <div className="flex flex-col gap-8 flex-1 max-w-5xl">
           <ProfileWidget />
           <GalleryWidget />
         </div>
